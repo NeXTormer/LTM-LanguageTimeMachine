@@ -95,12 +95,13 @@ def extract_data(file):
 
 if __name__ == "__main__":
 
-    directory = '../dump/'
+    directory = '/Volumes/Untitled/dump/'
 
     enable_multithreading = True
 
     epub_files = [file for file in tqdm(os.listdir(directory), desc='generate file list') if file.endswith('.epub')]
     file_paths = [os.path.join(directory, file) for file in tqdm(epub_files, desc='generate file paths')]
+
 
     pbar = tqdm(total=len(file_paths), desc='Processing EPUBs', position=0, leave=True)
 
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         with Pool() as pool:
             results = pool.imap_unordered(extract_data, file_paths, chunksize=8)
 
-            with open("metadata.json", "w") as text_file:
+            with open("dataset.json", "w") as text_file:
                 text_file.write('[')
                 for result in results:
                     pbar.update(1)
