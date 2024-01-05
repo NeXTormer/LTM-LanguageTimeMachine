@@ -1,0 +1,1 @@
+docker run -it --rm -v /home/felix/Dev/zim-extraction:/data ghcr.io/openzim/zim-tools:3.3.0 zimdump dump /data/gutenberg_en_all_2023-11.zim --dir=/data/dump/

@@ -10,8 +10,18 @@ import glob
 from datetime import datetime as dt
 from dateutil.parser import parse
 import json
+import nltk
+nltk.download('words')
 
-# book = epub.read_epub("../dump/1test.epub")
+from nltk.corpus import words
+
+
+check_word_length_cutoff = 3
+
+all_words_list = words.words()
+all_words_list = [word for word in all_words_list if len(word) <= check_word_length_cutoff]
+
+chunk_size = 2000
 
 
 def extract_data(file):
@@ -59,10 +69,6 @@ def extract_data(file):
                     soup = BeautifulSoup(item.get_content().decode('utf-8', 'ignore'), 'html.parser')
                     text_content = soup.get_text(separator=' ', strip=True)
 
-                    # with open(title + ".txt", "w") as text_file:
-                    #     text_file.write(item.id + '\n')
-                    #     text_file.write(text_content)
-
                     numbers = re.findall(str("\\s[1-2][7-9]\\d\\d\\s"), str(title + text_content)[:500])
 
                     for number in numbers:
@@ -80,27 +86,41 @@ def extract_data(file):
         # Remove extra whitespaces
         raw_text = re.sub(r'\s+', ' ', raw_text).strip()
 
-        data['text'] = raw_text
+        # remove everything but words and spaces
+        raw_text_only_text = re.sub(r'[^a-zA-Z ]+', '', raw_text).strip().lower()
+
+        if data['date'] == str(3000) or len(raw_text) < 5000 or len(raw_text_only_text) < 1000:
+            return None
+        text_ratio = len(raw_text_only_text) / len(raw_text)
+
+
+        raw_text_only_text_only_read_words = [word for word in raw_text_only_text.split() if len(word) > check_word_length_cutoff or word in all_words_list]
+
+
+        text_chunks = [raw_text_only_text_only_read_words[i:i + chunk_size] for i in range(0, len(raw_text_only_text_only_read_words), chunk_size)]
+
+
+        data['text_ratio'] = text_ratio
+        data['text'] = [" ".join(chunk) for chunk in text_chunks]
 
     except Exception as e:
         print("Failed to process: ", file)
         print(e)
         return None
 
-    if data['date'] == str(3000):
-        return None
-    else:
-        return data
+
+    return data
 
 
 if __name__ == "__main__":
 
-    directory = '../dump/'
+    directory = '/home/felix/Dev/zim-extraction/dump/'
 
     enable_multithreading = True
 
     epub_files = [file for file in tqdm(os.listdir(directory), desc='generate file list') if file.endswith('.epub')]
     file_paths = [os.path.join(directory, file) for file in tqdm(epub_files, desc='generate file paths')]
+
 
     pbar = tqdm(total=len(file_paths), desc='Processing EPUBs', position=0, leave=True)
 
@@ -118,7 +138,7 @@ if __name__ == "__main__":
         with Pool() as pool:
             results = pool.imap_unordered(extract_data, file_paths, chunksize=8)
 
-            with open("metadata.json", "w") as text_file:
+            with open("dataset.json", "w") as text_file:
                 text_file.write('[')
                 for result in results:
                     pbar.update(1)
