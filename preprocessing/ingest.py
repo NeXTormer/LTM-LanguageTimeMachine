@@ -97,11 +97,11 @@ def extract_data(file):
         raw_text_only_text_only_read_words = [word for word in raw_text_only_text.split() if len(word) > check_word_length_cutoff or word in all_words_list]
 
 
-        text_chunks = [raw_text_only_text_only_read_words[i:i + chunk_size] for i in range(0, len(raw_text_only_text_only_read_words), chunk_size)]
+        # text_chunks = [raw_text_only_text_only_read_words[i:i + chunk_size] for i in range(0, len(raw_text_only_text_only_read_words), chunk_size)]
 
 
         data['text_ratio'] = text_ratio
-        data['text'] = [" ".join(chunk) for chunk in text_chunks]
+        data['text'] = " ".join(raw_text_only_text_only_read_words)  # [" ".join(chunk) for chunk in text_chunks]
 
     except Exception as e:
         print("Failed to process: ", file)
